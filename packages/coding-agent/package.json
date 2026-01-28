@@ -4,8 +4,8 @@
 	"description": "Coding agent CLI with read, bash, edit, write tools and session management",
 	"type": "module",
 	"piConfig": {
-		"name": "pi",
-		"configDir": ".pi"
+		"name": "finn",
+		"configDir": ".config/finn"
 	},
 	"bin": {
 		"pi": "dist/cli.js"
