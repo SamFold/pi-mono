@@ -97,9 +97,9 @@ export class ToolExecutionComponent extends Container {
 		this.contentBox = new Box(1, 1, (text: string) => theme.bg("toolPendingBg", text));
 		this.contentText = new Text("", 1, 1, (text: string) => theme.bg("toolPendingBg", text));
 
-		// Use contentBox for bash (visual truncation) or custom tools with custom renderers
+		// Use contentBox for bash or any non-built-in tool (even without definition)
 		// Use contentText for built-in tools (including overrides without custom renderers)
-		if (toolName === "bash" || (toolDefinition && !this.shouldUseBuiltInRenderer())) {
+		if (toolName === "bash" || !this.shouldUseBuiltInRenderer()) {
 			this.addChild(this.contentBox);
 		} else {
 			this.addChild(this.contentText);
@@ -287,6 +287,17 @@ export class ToolExecutionComponent extends Container {
 				}
 			} else if (this.result) {
 				// Has result but no custom renderResult
+				const output = this.getTextOutput();
+				if (output) {
+					this.contentBox.addChild(new Text(theme.fg("toolOutput", output), 0, 0));
+				}
+			}
+		} else {
+			// Custom tool without definition: fall back to simple name + output
+			this.contentBox.setBgFn(bgFn);
+			this.contentBox.clear();
+			this.contentBox.addChild(new Text(theme.fg("toolTitle", theme.bold(this.toolName)), 0, 0));
+			if (this.result) {
 				const output = this.getTextOutput();
 				if (output) {
 					this.contentBox.addChild(new Text(theme.fg("toolOutput", output), 0, 0));
