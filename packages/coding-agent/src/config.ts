@@ -153,20 +153,28 @@ export function getExamplesPath(): string {
 	return resolve(join(getPackageDir(), "examples"));
 }
 
-/** Get path to CHANGELOG.md */
-export function getChangelogPath(): string {
-	return resolve(join(getPackageDir(), "CHANGELOG.md"));
-}
-
 // =============================================================================
 // App Config (from package.json piConfig)
 // =============================================================================
 
 const pkg = JSON.parse(readFileSync(getPackageJsonPath(), "utf-8"));
+const piConfig = pkg.piConfig ?? {};
 
-export const APP_NAME: string = pkg.piConfig?.name || "pi";
-export const CONFIG_DIR_NAME: string = pkg.piConfig?.configDir || ".pi";
+export const APP_NAME: string = piConfig.name || "pi";
+export const CONFIG_DIR_NAME: string = piConfig.configDir || ".pi";
 export const VERSION: string = pkg.version;
+export const UPDATE_CHECK_ENABLED: boolean = piConfig.updateCheck?.enabled !== false;
+export const UPDATE_CHECK_PACKAGE: string | undefined = piConfig.updateCheck?.packageName ?? pkg.name;
+export const CHANGELOG_ENABLED: boolean = piConfig.changelog?.enabled !== false;
+
+/** Get path to CHANGELOG.md */
+export function getChangelogPath(): string {
+	const overridePath: string | undefined = piConfig.changelog?.path;
+	if (overridePath) {
+		return resolve(join(getPackageDir(), overridePath));
+	}
+	return resolve(join(getPackageDir(), "CHANGELOG.md"));
+}
 
 // e.g., PI_CODING_AGENT_DIR or TAU_CODING_AGENT_DIR
 export const ENV_AGENT_DIR = `${APP_NAME.toUpperCase()}_CODING_AGENT_DIR`;

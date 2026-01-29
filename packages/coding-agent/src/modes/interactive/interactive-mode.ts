@@ -45,10 +45,16 @@ import {
 import { spawn, spawnSync } from "child_process";
 import {
 	APP_NAME,
+	CHANGELOG_ENABLED,
 	getAuthPath,
+	getChangelogPath,
 	getDebugLogPath,
 	getShareViewerUrl,
 	getUpdateInstruction,
+	isBunBinary,
+	isBunRuntime,
+	UPDATE_CHECK_ENABLED,
+	UPDATE_CHECK_PACKAGE,
 	VERSION,
 } from "../../config.js";
 import { type AgentSession, type AgentSessionEvent, parseSkillBlock } from "../../core/agent-session.js";
@@ -67,7 +73,7 @@ import { resolveModelScope } from "../../core/model-resolver.js";
 import type { ResourceDiagnostic } from "../../core/resource-loader.js";
 import { type SessionContext, SessionManager } from "../../core/session-manager.js";
 import type { TruncationResult } from "../../core/tools/truncate.js";
-import { getChangelogPath, getNewEntries, parseChangelog } from "../../utils/changelog.js";
+import { getNewEntries, parseChangelog } from "../../utils/changelog.js";
 import { copyToClipboard } from "../../utils/clipboard.js";
 import { extensionForImageMimeType, readClipboardImage } from "../../utils/clipboard-image.js";
 import { ensureTool } from "../../utils/tools-manager.js";
@@ -602,10 +608,14 @@ export class InteractiveMode {
 	 * Check npm registry for a newer version.
 	 */
 	private async checkForNewVersion(): Promise<string | undefined> {
+		if (!UPDATE_CHECK_ENABLED) return undefined;
 		if (process.env.PI_SKIP_VERSION_CHECK) return undefined;
 
 		try {
-			const response = await fetch("https://registry.npmjs.org/@mariozechner/pi-coding-agent/latest");
+			const packageName = UPDATE_CHECK_PACKAGE;
+			if (!packageName) return undefined;
+			const encodedName = encodeURIComponent(packageName);
+			const response = await fetch(`https://registry.npmjs.org/${encodedName}/latest`);
 			if (!response.ok) return undefined;
 
 			const data = (await response.json()) as { version?: string };
@@ -626,6 +636,9 @@ export class InteractiveMode {
 	 * Only shows new entries since last seen version, skips for resumed sessions.
 	 */
 	private getChangelogForDisplay(): string | undefined {
+		if (!CHANGELOG_ENABLED) {
+			return undefined;
+		}
 		// Skip changelog for resumed/continued sessions (already have messages)
 		if (this.session.state.messages.length > 0) {
 			return undefined;
@@ -3936,6 +3949,12 @@ export class InteractiveMode {
 	}
 
 	private handleChangelogCommand(): void {
+		if (!CHANGELOG_ENABLED) {
+			this.chatContainer.addChild(new Spacer(1));
+			this.chatContainer.addChild(new Text(theme.fg("muted", "Changelog is disabled for this build."), 1, 0));
+			this.ui.requestRender();
+			return;
+		}
 		const changelogPath = getChangelogPath();
 		const allEntries = parseChangelog(changelogPath);
 
