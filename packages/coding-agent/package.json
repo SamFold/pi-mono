@@ -5,7 +5,13 @@
 	"type": "module",
 	"piConfig": {
 		"name": "finn",
-		"configDir": ".config/finn"
+		"configDir": ".config/finn",
+		"updateCheck": {
+			"enabled": false
+		},
+		"changelog": {
+			"enabled": false
+		}
 	},
 	"bin": {
 		"pi": "dist/cli.js"
